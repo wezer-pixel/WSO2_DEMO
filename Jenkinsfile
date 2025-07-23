@@ -2,8 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'wezer/wso2apim_tutorial'
-        DOCKER_IMAGE_NAME = 'wso2apimanager'
         // IMPORTANT: Change this to your Docker Hub username
         DOCKERHUB_USERNAME       = 'wezer'
         // The ID of your Docker Hub credentials stored in Jenkins
@@ -91,12 +89,13 @@ void buildAndPush(String servicePath) {
         if (!dockerAvailable) {
             error "Docker is not installed on this Jenkins agent. Please install Docker first."
         }
-                    
+
+        def serviceName = servicePath.split('/').last()
         // Use the short git commit hash for the image tag
         def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
 
-        // Tag the image with the build number for versioning
-        def imageName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${imageTag}"
+        // Correct image name format: <username>/<service-name>:<tag>
+        def imageName = "${env.DOCKERHUB_USERNAME}/${serviceName}:${imageTag}"
         
         echo "--- Building and Pushing ${imageName} from path ${servicePath} ---"
 
@@ -104,7 +103,7 @@ void buildAndPush(String servicePath) {
             sh 'chmod +x mvnw'
             sh './mvnw clean package -DskipTests'
             def dockerImage = docker.build(imageName, '.')
-            docker.withRegistry(DOCKER_REGISTRY, DOCKERHUB_CREDENTIALS_ID) {
+            docker.withRegistry('wezer/wso2apim_tutorial', DOCKERHUB_CREDENTIALS_ID) {
                 dockerImage.push()
             }
             echo "--- Successfully pushed ${imageName} ---"
