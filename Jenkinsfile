@@ -2,13 +2,50 @@ pipeline {
     agent any
 
     environment {
+        DOCKER_REGISTRY = 'wezer/wso2apim_tutorial'
+        DOCKER_IMAGE_NAME = 'wso2apimanager'
         // IMPORTANT: Change this to your Docker Hub username
         DOCKERHUB_USERNAME       = 'wezer'
         // The ID of your Docker Hub credentials stored in Jenkins
         DOCKERHUB_CREDENTIALS_ID = 'wso2-docker-token'
+
+        GITOPS_REPO_URL = "https://github.com/wezer-pixel/WSO2_DEMO.git"
+        GITOPS_REPO_CREDS_ID = 'wso2-gh-token'
     }
 
     stages {
+        stage('System Check') {
+            steps {
+                sh '''
+                    echo "=== System Information ==="
+                    whoami
+                    pwd
+                    
+                    echo "=== Available Commands ==="
+                    which docker || echo "❌ Docker not found - needs to be installed"
+                    which git || echo "❌ Git not found"
+                    which yq || echo "❌ yq not found - will use sed"
+                    which sed || echo "✅ sed found"
+                    
+                    echo "=== Docker Check ==="
+                    if command -v docker > /dev/null 2>&1; then
+                        docker --version
+                        docker ps || echo "Docker daemon not running or permission denied"
+                    else
+                        echo "Docker is not installed on this system"
+                    fi
+                '''
+            }
+        }
+
+        stage('Checkout SCM') {
+            steps {
+                // This cleans the workspace before checking out the application code
+                cleanWs()
+                checkout scm
+            }
+        }
+
         stage('Build and Push Backend Images') {
             failFast true // if one build fails, stop the others
             parallel {
@@ -48,9 +85,18 @@ pipeline {
  */
 void buildAndPush(String servicePath) {
     script {
-        def serviceName = servicePath.split('/').last()
+        // Check if Docker is available
+        def dockerAvailable = sh(script: 'which docker', returnStatus: true) == 0
+
+        if (!dockerAvailable) {
+            error "Docker is not installed on this Jenkins agent. Please install Docker first."
+        }
+                    
+        // Use the short git commit hash for the image tag
+        def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+
         // Tag the image with the build number for versioning
-        def imageName = "${env.DOCKERHUB_USERNAME}/${serviceName}:${env.BUILD_NUMBER}"
+        def imageName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${imageTag}"
         
         echo "--- Building and Pushing ${imageName} from path ${servicePath} ---"
 
@@ -58,7 +104,7 @@ void buildAndPush(String servicePath) {
             sh 'chmod +x mvnw'
             sh './mvnw clean package -DskipTests'
             def dockerImage = docker.build(imageName, '.')
-            docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS_ID) {
+            docker.withRegistry(DOCKER_REGISTRY, DOCKERHUB_CREDENTIALS_ID) {
                 dockerImage.push()
             }
             echo "--- Successfully pushed ${imageName} ---"

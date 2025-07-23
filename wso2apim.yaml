@@ -1,33 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: train-schedule-deployment
+  name: wso2apim
   labels:
-    app: train-schedule
+    app: wso2apim
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: train-schedule
+      app: wso2apim
   template:
     metadata:
       labels:
-        app: train-schedule
+        app: wso2apim
     spec:
       containers:
-        - name: train-schedule
+        - name: wso2apim
           # Replace with your actual image path from your container registry
-          image: your-registry/train-schedule-backend:latest
+          image: docker.io/wezer/wso2apim_tutorial
           ports:
             - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: train-schedule-service
+  name: wso2apim-service
 spec:
   selector:
-    app: train-schedule
+    app: wso2apim
   ports:
     - protocol: TCP
       port: 80
