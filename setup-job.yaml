@@ -10,12 +10,12 @@ spec:
         image: alpine/curl # A small image with curl
         command: ["/bin/sh", "-c"]
         args:
-          - apk add --no-cache bash jq netcat-openbsd && # Install dependencies
-            chmod +x /scripts/*.sh && # Make scripts executable
-            chmod +x /scripts/quantis-resources/*.sh &&
-            chmod +x /scripts/gogo-resources/*.sh &&
-            chmod +x /scripts/railco-resources/*.sh &&
-            /scripts/setup.sh # Run the main setup script
+          - apk add --no-cache bash jq netcat-openbsd && \
+            chmod +x /scripts/*.sh && \
+            chmod +x /scripts/quantis-resources/*.sh && \
+            chmod +x /scripts/gogo-resources/*.sh && \
+            chmod +x /scripts/railco-resources/*.sh && \
+            /scripts/setup.sh
         env:
           # The APIM host is the Kubernetes service name for the WSO2 APIM
           - name: APIM_HOST

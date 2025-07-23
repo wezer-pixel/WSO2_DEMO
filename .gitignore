@@ -9,4 +9,3 @@ target
 *.mvn
 dockerfiles/scripts/lock
 jenkinsfile.groovy
-setup-job.yaml
