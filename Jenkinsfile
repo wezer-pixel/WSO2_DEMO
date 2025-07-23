@@ -60,16 +60,8 @@ pipeline {
                     echo "=== DEBUG: This stage should execute ==="
                     echo "DOCKERHUB_USERNAME: ${env.DOCKERHUB_USERNAME}"
                     echo "DOCKERHUB_CREDENTIALS_ID: ${env.DOCKERHUB_CREDENTIALS_ID}"
-                }
-            }
-        }
-
-        stage('Build and Push Backend Images') {
-            steps {
-                script {
-                    echo "=== Starting Build and Push Backend Images stage ==="
                     
-                    // Check if directories exist before parallel execution
+                    // Check if directories exist
                     def servicePaths = [
                         'backends/train-schedule',
                         'backends/train-location-simulator', 
@@ -87,6 +79,9 @@ pipeline {
                     }
                 }
             }
+        }
+
+        stage('Build and Push Backend Images') {
             parallel {
                 stage('train-schedule') {
                     steps {
