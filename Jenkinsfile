@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         // IMPORTANT: Change this to your Docker Hub username
-        DOCKERHUB_USERNAME       = 'your-dockerhub-username'
+        DOCKERHUB_USERNAME       = 'wezer'
         // The ID of your Docker Hub credentials stored in Jenkins
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-credentials'
+        DOCKERHUB_CREDENTIALS_ID = 'wso2-docker-token'
     }
 
     stages {
