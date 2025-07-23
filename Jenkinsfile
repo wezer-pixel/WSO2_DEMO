@@ -140,19 +140,10 @@ void buildAndPush(String servicePath) {
         dir(servicePath) {
             // List directory contents for debugging
             sh 'echo "=== Directory contents ==="; ls -la'
-            
-            // Check if mvnw exists
-            if (fileExists('mvnw')) {
-                echo "✅ Found mvnw, building Maven project"
-                sh 'chmod +x mvnw'
-                sh './mvnw clean package -DskipTests'
-            } else {
-                echo "❌ No mvnw found in ${servicePath}, skipping Maven build"
-            }
-            
+                        
             // Check if Dockerfile exists
             if (fileExists('Dockerfile')) {
-                echo "✅ Found Dockerfile, building Docker image"
+                echo "✅ Found Dockerfile, building and pushing Docker image..."
                 // Build the Docker image
                 def dockerImage = docker.build(imageName, '.')
                 
