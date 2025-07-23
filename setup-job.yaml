@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: apim-tutorial-setup
+spec:
+  template:
+    spec:
+      containers:
+      - name: setup-container
+        image: alpine/curl # A small image with curl
+        command: ["/bin/sh", "-c"]
+        args:
+          - apk add --no-cache bash jq netcat-openbsd && # Install dependencies
+            chmod +x /scripts/*.sh && # Make scripts executable
+            chmod +x /scripts/quantis-resources/*.sh &&
+            chmod +x /scripts/gogo-resources/*.sh &&
+            chmod +x /scripts/railco-resources/*.sh &&
+            /scripts/setup.sh # Run the main setup script
+        env:
+          # The APIM host is the Kubernetes service name for the WSO2 APIM
+          - name: APIM_HOST
+            value: "wso2-apim-service.default.svc.cluster.local"
+          - name: RETRY_SEC
+            value: "15"
+        volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts
+      volumes:
+      - name: scripts-volume
+        # This assumes you create a ConfigMap from your scripts directory
+        configMap:
+          name: apim-setup-scripts
+      restartPolicy: OnFailure
+  backoffLimit: 4
