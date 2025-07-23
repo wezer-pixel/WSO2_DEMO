@@ -41,11 +41,52 @@ pipeline {
                 // This cleans the workspace before checking out the application code
                 cleanWs()
                 checkout scm
+                
+                // Add debug output to see directory structure
+                sh '''
+                    echo "=== Workspace Contents ==="
+                    ls -la
+                    echo "=== Checking for backends directory ==="
+                    ls -la backends/ || echo "No backends directory found"
+                    echo "=== Current working directory ==="
+                    pwd
+                '''
+            }
+        }
+
+        stage('Debug Stage') {
+            steps {
+                script {
+                    echo "=== DEBUG: This stage should execute ==="
+                    echo "DOCKERHUB_USERNAME: ${env.DOCKERHUB_USERNAME}"
+                    echo "DOCKERHUB_CREDENTIALS_ID: ${env.DOCKERHUB_CREDENTIALS_ID}"
+                }
             }
         }
 
         stage('Build and Push Backend Images') {
-            failFast true // if one build fails, stop the others
+            steps {
+                script {
+                    echo "=== Starting Build and Push Backend Images stage ==="
+                    
+                    // Check if directories exist before parallel execution
+                    def servicePaths = [
+                        'backends/train-schedule',
+                        'backends/train-location-simulator', 
+                        'backends/telecom-backends',
+                        'backends/soap-service',
+                        'backends/telecom-soap-service'
+                    ]
+                    
+                    servicePaths.each { servicePath ->
+                        if (fileExists(servicePath)) {
+                            echo "✅ Found directory: ${servicePath}"
+                        } else {
+                            echo "❌ Missing directory: ${servicePath}"
+                        }
+                    }
+                }
+            }
             parallel {
                 stage('train-schedule') {
                     steps {
@@ -83,6 +124,8 @@ pipeline {
  */
 void buildAndPush(String servicePath) {
     script {
+        echo "=== BUILDANDPUSH: Starting for ${servicePath} ==="
+        
         // Check if Docker is available
         def dockerAvailable = sh(script: 'which docker', returnStatus: true) == 0
 
@@ -100,27 +143,32 @@ void buildAndPush(String servicePath) {
         echo "--- Building and Pushing ${imageName} from path ${servicePath} ---"
 
         dir(servicePath) {
+            // List directory contents for debugging
+            sh 'echo "=== Directory contents ==="; ls -la'
+            
             // Check if mvnw exists
             if (fileExists('mvnw')) {
+                echo "✅ Found mvnw, building Maven project"
                 sh 'chmod +x mvnw'
                 sh './mvnw clean package -DskipTests'
             } else {
-                echo "No mvnw found in ${servicePath}, skipping Maven build"
+                echo "❌ No mvnw found in ${servicePath}, skipping Maven build"
             }
             
             // Check if Dockerfile exists
             if (fileExists('Dockerfile')) {
+                echo "✅ Found Dockerfile, building Docker image"
                 // Build the Docker image
                 def dockerImage = docker.build(imageName, '.')
                 
                 // Push the built image
-                docker.withRegistry('https://docker.io', DOCKERHUB_CREDENTIALS_ID) {
+                docker.withRegistry('https://docker.io', env.DOCKERHUB_CREDENTIALS_ID) {
                     dockerImage.push()  // Push with commit hash tag
                     dockerImage.push('latest')  // Also push as latest tag
                 }
                 echo "--- Successfully pushed ${imageName} ---"
             } else {
-                echo "No Dockerfile found in ${servicePath}, skipping Docker build"
+                echo "❌ No Dockerfile found in ${servicePath}, skipping Docker build"
             }
         }
     }
