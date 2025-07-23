@@ -100,18 +100,28 @@ void buildAndPush(String servicePath) {
         echo "--- Building and Pushing ${imageName} from path ${servicePath} ---"
 
         dir(servicePath) {
-            sh 'chmod +x mvnw'
-            sh './mvnw clean package -DskipTests'
-            
-            // Build the Docker image
-            def dockerImage = docker.build(imageName, '.')
-            
-            // Push the built image (not a hardcoded one)
-            docker.withRegistry('https://docker.io', DOCKERHUB_CREDENTIALS_ID) {
-                dockerImage.push()  // Push the actual built image
-                dockerImage.push('latest')  // Also push as latest tag
+            // Check if mvnw exists
+            if (fileExists('mvnw')) {
+                sh 'chmod +x mvnw'
+                sh './mvnw clean package -DskipTests'
+            } else {
+                echo "No mvnw found in ${servicePath}, skipping Maven build"
             }
-            echo "--- Successfully pushed ${imageName} ---"
+            
+            // Check if Dockerfile exists
+            if (fileExists('Dockerfile')) {
+                // Build the Docker image
+                def dockerImage = docker.build(imageName, '.')
+                
+                // Push the built image
+                docker.withRegistry('https://docker.io', DOCKERHUB_CREDENTIALS_ID) {
+                    dockerImage.push()  // Push with commit hash tag
+                    dockerImage.push('latest')  // Also push as latest tag
+                }
+                echo "--- Successfully pushed ${imageName} ---"
+            } else {
+                echo "No Dockerfile found in ${servicePath}, skipping Docker build"
+            }
         }
     }
 }
