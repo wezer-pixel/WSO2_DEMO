@@ -103,8 +103,8 @@ void buildAndPush(String servicePath) {
             sh 'chmod +x mvnw'
             sh './mvnw clean package -DskipTests'
             def dockerImage = docker.build(imageName, '.')
-            docker.withRegistry('', DOCKERHUB_CREDENTIALS_ID) {
-                dockerImage.push()
+            docker.withRegistry('https://docker.io', DOCKERHUB_CREDENTIALS_ID) {
+                docker.image('docker.io/wezer/wso2apim_tutorial:latest').push()
             }
             echo "--- Successfully pushed ${imageName} ---"
         }
