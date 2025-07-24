@@ -4,7 +4,8 @@ FROM maven:3.8.5-openjdk-11 AS build
 WORKDIR /app
 # Copy pom.xml and .mvn to leverage Docker layer caching
 COPY .mvn/ .mvn
-COPY --chmod=755 mvnw .
+COPY mvnw .
+RUN chmod +x mvnw
 COPY pom.xml .
 # Download dependencies
 RUN ./mvnw dependency:go-offline

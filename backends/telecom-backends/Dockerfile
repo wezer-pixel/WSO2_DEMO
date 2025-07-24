@@ -4,7 +4,8 @@ FROM maven:3.8.5-openjdk-11 AS build
 WORKDIR /app
 # Copy pom.xml and .mvn to leverage Docker layer caching
 COPY .mvn/ .mvn
-COPY --chmod=755 mvnw .
+COPY mvnw .
+RUN chmod +x mvnw
 COPY pom.xml .
 # Download dependencies
 RUN ./mvnw dependency:go-offline
@@ -18,10 +19,10 @@ FROM openjdk:11-jre-slim
 WORKDIR /app
 
 # Copy the built JAR from the build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/*.war app.war
 
 # Expose the port the application runs on (default for Spring Boot is 8080)
 EXPOSE 8080
 
 # Command to run the application
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-jar","app.war"]
