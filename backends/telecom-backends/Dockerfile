@@ -18,11 +18,11 @@ RUN ./mvnw clean package -DskipTests
 FROM openjdk:11-jre-slim
 WORKDIR /app
 
-# Copy the built artifact from the build stage. Assuming it's a .war file.
-COPY --from=build /app/target/*.war app.war
+# Copy the built JAR from the build stage
+COPY --from=build /app/target/*.jar app.jar
 
 # Expose the port the application runs on (default for Spring Boot is 8080)
 EXPOSE 8080
 
 # Command to run the application
-ENTRYPOINT ["java","-jar","app.war"]
+ENTRYPOINT ["java","-jar","app.jar"]

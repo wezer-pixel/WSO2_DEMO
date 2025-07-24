@@ -67,7 +67,7 @@ pipeline {
                         'dockerfiles/backends',
                         'dockerfiles/backends/rest',
                         'dockerfiles/backends/soap',
-                        'dockerfiles/backends/keycloak-setup-script',
+                        'dockerfiles/keycloak-setup-script',
                         'dockerfiles/scripts',
                         'dockerfiles/streaming-integrator',
                         'dockerfiles/streaming-integrator/build-image'
