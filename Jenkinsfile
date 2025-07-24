@@ -151,7 +151,7 @@ void buildAndPush(String servicePath) {
                 def dockerImage = docker.build(imageName, '.')
                 
                 // Push the built image
-                docker.withRegistry('https://docker.io', env.DOCKERHUB_CREDENTIALS_ID) {
+                docker.withRegistry('', env.DOCKERHUB_CREDENTIALS_ID) {
                     dockerImage.push()  // Push with commit hash tag
                     dockerImage.push('latest')  // Also push as latest tag
                 }
