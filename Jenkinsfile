@@ -63,11 +63,14 @@ pipeline {
                     
                     // Check if directories exist
                     def servicePaths = [
-                        'backends/train-schedule',
-                        'backends/train-location-simulator', 
-                        'backends/telecom-backends',
-                        'backends/soap-service',
-                        'backends/telecom-soap-service'
+                        'dockerfiles/apim',
+                        'dockerfiles/backends',
+                        'dockerfiles/backends/rest',
+                        'dockerfiles/backends/soap'
+                        'dockerfiles/backends/keycloack-setup-script',
+                        'dockerfiles/scripts',
+                        'dockerfiles/streaming-integrator',
+                        'dockerfiles/streaming-integrator/build-image'
                     ]
                     
                     servicePaths.each { servicePath ->
