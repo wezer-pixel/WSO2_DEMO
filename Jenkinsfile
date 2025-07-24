@@ -66,7 +66,7 @@ pipeline {
                         'dockerfiles/apim',
                         'dockerfiles/backends',
                         'dockerfiles/backends/rest',
-                        'dockerfiles/backends/soap'
+                        'dockerfiles/backends/soap',
                         'dockerfiles/backends/keycloack-setup-script',
                         'dockerfiles/scripts',
                         'dockerfiles/streaming-integrator',
