@@ -27,7 +27,7 @@ pipeline {
                     if ! command -v yq &> /dev/null
                     then
                         echo "yq not found, installing..."
-                         apt-get update && apt-get install -y yq
+                         sudo apt-get update && sudo apt-get install -y yq
                     fi
                     
                     echo "=== Docker Check ==="
