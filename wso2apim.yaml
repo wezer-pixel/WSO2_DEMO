@@ -1,33 +1,119 @@
+# Deployment for WSO2 Micro Integrator
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wso2apim
+  name: wso2-mi-deployment
   labels:
-    app: wso2apim
+    app: wso2-mi
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: wso2apim
+      app: wso2-mi
   template:
     metadata:
       labels:
-        app: wso2apim
+        app: wso2-mi
     spec:
       containers:
-        - name: wso2apim
-          # This will be updated by your CI/CD pipeline
-          image: wezer/wso2apim:latest
+        - name: wso2-mi
+          image: wezer/mi-runtime:latest
+          ports:
+            - containerPort: 8290
+            - containerPort: 8253
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2-mi-service
+spec:
+  selector:
+    app: wso2-mi
+  ports:
+    - name: passthrough
+      protocol: TCP
+      port: 8290
+      targetPort: 8290
+    - name: servlet
+      protocol: TCP
+      port: 8253
+      targetPort: 8253
+
+---
+
+# Deployment for WSO2 Streaming Integrator
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wso2-si-deployment
+  labels:
+    app: wso2-si
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wso2-si
+  template:
+    metadata:
+      labels:
+        app: wso2-si
+    spec:
+      containers:
+        - name: wso2-si
+          image: wezer/si-runtime:latest
+          ports:
+            - containerPort: 9443
+            - containerPort: 9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2-si-service
+spec:
+  selector:
+    app: wso2-si
+  ports:
+    - name: https
+      protocol: TCP
+      port: 9443
+      targetPort: 9443
+    - name: http
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+
+---
+
+# Deployment for the SOAP Service Backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soap-service-backend-deployment
+  labels:
+    app: soap-service-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soap-service-backend
+  template:
+    metadata:
+      labels:
+        app: soap-service-backend
+    spec:
+      containers:
+        - name: soap-service-backend
+          image: wezer/soap-service-backend:latest
           ports:
             - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: wso2apim-service
+  name: soap-service-backend-service
 spec:
   selector:
-    app: wso2apim
+    app: soap-service-backend
   ports:
     - protocol: TCP
       port: 8080
