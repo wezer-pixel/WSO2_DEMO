@@ -111,7 +111,7 @@ pipeline {
                     }
                 }
                 stage('apim-runtime') {
-                    script {
+                    steps {
                         buildAndPush(
                             servicePath: 'dockerfiles/apim',
                             serviceNameOverride: 'apim-runtime',
