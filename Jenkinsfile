@@ -24,7 +24,13 @@ pipeline {
                     which git || echo "❌ Git not found"
                     which java || echo "❌ Java (JDK) not found - required for Maven builds"
                     which mvn || echo "⚠️ Maven (mvn) not found - will rely on ./mvnw wrapper"
-                    which yq || echo "❌ yq not found - will use sed"
+                    if ! command -v yq &> /dev/null
+                    then
+                        echo "yq not found, installing..."
+                        # Add command to install yq based on your agent's OS
+                        # For example, on Alpine:
+                        apk add --no-cache yq
+                    fi
                     which sed || echo "✅ sed found"
                     
                     echo "=== Docker Check ==="
@@ -94,7 +100,7 @@ pipeline {
                         buildAndPush(
                             servicePath: 'dockerfiles/micro-integrator', 
                             serviceNameOverride: 'mi-runtime', 
-                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2mi:4.1.0'
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2mi:4.2.0'
                         )
                     }
                 }
@@ -103,7 +109,7 @@ pipeline {
                         buildAndPush(
                             servicePath: 'dockerfiles/streaming-integrator', 
                             serviceNameOverride: 'si-runtime', 
-                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2si:latest'
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2si:4.0.0-ubuntu'
                         )
                     }
                 }
