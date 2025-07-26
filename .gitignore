@@ -1,9 +1,2 @@
-target
-.classpath
-.settings
-.project
-*.i??
-*.DS_Store
-dockerfiles/scripts/lock
 jenkinsfile.groovy
 bck.txt

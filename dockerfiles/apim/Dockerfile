@@ -42,7 +42,7 @@ ARG MOTD='printf "\n\
  This Docker container comprises of a WSO2 product, running with its latest GA release \n\
  which is under the Apache License, Version 2.0. \n\
  Read more about Apache License, Version 2.0 here @ http://www.apache.org/licenses/LICENSE-2.0.\n"'
-ENV ENV=${USER_HOME}"/.ashrc"
+ENV ENV=${USER_HOME}"/.bashrc"
 
 # create the non-root user and group and set MOTD login message
 RUN \

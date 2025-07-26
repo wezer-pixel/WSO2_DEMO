@@ -108,7 +108,7 @@ pipeline {
                         buildAndPush(
                             servicePath: 'dockerfiles/apim',
                             serviceNameOverride: 'apim-runtime',
-                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2am:4.3.0'
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2am:4.5.0'
                         )
                     }
                 }
