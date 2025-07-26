@@ -70,12 +70,9 @@ pipeline {
                     def servicePaths = [
                         'dockerfiles/apim',
                         'dockerfiles/backends',
-                        'dockerfiles/backends/rest',
-                        'dockerfiles/backends/soap',
                         'dockerfiles/keycloak-setup-script',
                         'dockerfiles/scripts',
-                        'dockerfiles/streaming-integrator',
-                        'dockerfiles/streaming-integrator/build-image'
+                        'dockerfiles/streaming-integrator'
                     ]
                     
                     servicePaths.each { servicePath ->
