@@ -27,9 +27,7 @@ pipeline {
                     if ! command -v yq &> /dev/null
                     then
                         echo "yq not found, installing..."
-                        # Add command to install yq based on your agent's OS
-                        # For example, on Alpine:
-                        apk add --no-cache yq
+                         apt-get update && apt-get install -y yq
                     fi
                     
                     echo "=== Docker Check ==="
