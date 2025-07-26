@@ -31,7 +31,6 @@ pipeline {
                         # For example, on Alpine:
                         apk add --no-cache yq
                     fi
-                    which sed || echo "✅ sed found"
                     
                     echo "=== Docker Check ==="
                     if command -v docker > /dev/null 2>&1; then
