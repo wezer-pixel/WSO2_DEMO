@@ -183,6 +183,18 @@ void buildAndPush(Map params) {
             // Step 2: Build and push the Docker image
             if (fileExists('Dockerfile')) {
                 echo "✅ Found Dockerfile, building and pushing Docker image..."
+
+                // If a base image is specified in build-args, pull it first for reliability.
+                if (buildArgs.contains('BASE_IMAGE')) {
+                    def baseImage = buildArgs.split('=')[1].trim()
+                    echo "--- Pulling base image ${baseImage} ---"
+                    try {
+                        sh "docker pull ${baseImage}"
+                    } catch (e) {
+                        error "Failed to pull base image ${baseImage}. Please check if the image exists and is accessible. Error: ${e.message}"
+                    }
+                }
+
                 // Build the Docker image
                 def dockerImage = docker.build(fullImageNameWithTag, "${buildArgs} .")
                 
