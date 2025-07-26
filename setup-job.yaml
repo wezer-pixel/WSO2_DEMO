@@ -1,34 +1,24 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: apim-tutorial-setup
+  # This name ensures the job is unique. You might want to tie it to a release version.
+  name: wso2-apim-setup-job 
 spec:
   template:
     spec:
       containers:
-      - name: setup-container
-        image: alpine/curl # A small image with curl
-        command: ["/bin/sh", "-c"]
-        args:
-          - apk add --no-cache bash jq netcat-openbsd && \
-            chmod +x /scripts/*.sh && \
-            chmod +x /scripts/quantis-resources/*.sh && \
-            chmod +x /scripts/gogo-resources/*.sh && \
-            chmod +x /scripts/railco-resources/*.sh && \
-            /scripts/setup.sh
+      - name: setup-scripts
+        # This is the image your Jenkins pipeline is already building
+        image: wezer/apim-scripts:latest 
         env:
-          # The APIM host is the Kubernetes service name for the WSO2 APIM
+          # The Service name for your APIM deployment in Kubernetes
           - name: APIM_HOST
-            value: "wso2-apim-service.default.svc.cluster.local"
+            value: "wso2-apim-service" 
           - name: RETRY_SEC
-            value: "15"
-        volumeMounts:
-        - name: scripts-volume
-          mountPath: /scripts
-      volumes:
-      - name: scripts-volume
-        # This assumes you create a ConfigMap from your scripts directory
-        configMap:
-          name: apim-setup-scripts
-      restartPolicy: OnFailure
-  backoffLimit: 4
+            value: "5"
+          - name: RE_RUN
+            value: "false"
+      # This tells the pod not to restart after the script finishes successfully
+      restartPolicy: OnFailure 
+  # This will automatically clean up the job's pod after it completes.
+  ttlSecondsAfterFinished: 100
