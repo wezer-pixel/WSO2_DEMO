@@ -1,4 +1,88 @@
-# Deployment for WSO2 Micro Integrator
+# 1. Service and Endpoint to connect to PostgreSQL VM
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-postgres
+spec:
+  ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: external-postgres
+subsets:
+  - addresses:
+      - ip: "10.3.0.114" 
+    ports:
+      - port: 5432
+
+---
+
+# 2. WSO2 API Manager Deployment and Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wso2-apim-deployment
+  labels:
+    app: wso2-apim
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wso2-apim
+  template:
+    metadata:
+      labels:
+        app: wso2-apim
+    spec:
+      containers:
+      - name: wso2-apim
+        image: wezer/apim-runtime:latest 
+        ports:
+        - containerPort: 9443
+        - containerPort: 8243
+        env:
+          # --- Conn to database ---
+          - name: DB_HOST
+            value: "external-postgres" 
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: "wso2apim" 
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_USER
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: POSTGRES_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2-apim-service
+spec:
+  selector:
+    app: wso2-apim
+  ports:
+  - name: https-api
+    protocol: TCP
+    port: 9443
+    targetPort: 9443
+  - name: https-gateway
+    protocol: TCP
+    port: 8243
+    targetPort: 8243
+
+---
+
+# 3. WSO2 Micro Integrator Deployment and Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -41,7 +125,7 @@ spec:
 
 ---
 
-# Deployment for WSO2 Streaming Integrator
+# 4. WSO2 Streaming Integrator Deployment and Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -84,36 +168,36 @@ spec:
 
 ---
 
-# Deployment for the SOAP Service Backend
+# 5. Consolidated Backend Services Deployment and Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: soap-service-backend-deployment
+  name: backend-services-deployment
   labels:
-    app: soap-service-backend
+    app: backend-services
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: soap-service-backend
+      app: backend-services
   template:
     metadata:
       labels:
-        app: soap-service-backend
+        app: backend-services
     spec:
       containers:
-        - name: soap-service-backend
-          image: wezer/soap-service-backend:latest
+        - name: backend-services
+          image: wezer/backend-services:latest
           ports:
             - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: soap-service-backend-service
+  name: backend-services-service
 spec:
   selector:
-    app: soap-service-backend
+    app: backend-services
   ports:
     - protocol: TCP
       port: 8080

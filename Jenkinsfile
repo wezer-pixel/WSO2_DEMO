@@ -110,6 +110,15 @@ pipeline {
                         )
                     }
                 }
+                stage('apim-runtime') {
+                    script {
+                        buildAndPush(
+                            servicePath: 'dockerfiles/apim',
+                            serviceNameOverride: 'apim-runtime',
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2apim:4.2.0'
+                        )
+                    }
+                }
                 stage('apim-scripts') {
                     steps {
                         buildAndPush(
@@ -119,29 +128,10 @@ pipeline {
                     }
                 }
                 // Backend Services
-                stage('train-schedule-backend') {
+                
+                stage('backend-services') {
                     steps {
-                        buildAndPush(servicePath: 'backends/train-schedule', serviceNameOverride: 'train-schedule-backend')
-                    }
-                }
-                stage('train-location-simulator') {
-                    steps {
-                        buildAndPush(servicePath: 'backends/train-location-simulator')
-                    }
-                }
-                stage('telecom-backend') {
-                    steps {
-                        buildAndPush(servicePath: 'backends/telecom-backends', serviceNameOverride: 'telecom-backend')
-                    }
-                }
-                stage('soap-service-backend') {
-                    steps {
-                        buildAndPush(servicePath: 'backends/soap-service', serviceNameOverride: 'soap-service-backend')
-                    }
-                }
-                stage('telecom-soap-backend') {
-                    steps {
-                        buildAndPush(servicePath: 'backends/telecom-soap-service', serviceNameOverride: 'telecom-soap-backend')
+                        buildAndPush(serviceNameOverride: 'backend-services', servicePath: 'dockerfiles/backends', buildFromSource: false)
                     }
                 }
             }
