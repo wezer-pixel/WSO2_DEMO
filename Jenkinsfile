@@ -22,6 +22,8 @@ pipeline {
                     echo "=== Available Commands ==="
                     which docker || echo "❌ Docker not found - needs to be installed"
                     which git || echo "❌ Git not found"
+                    which java || echo "❌ Java (JDK) not found - required for Maven builds"
+                    which mvn || echo "⚠️ Maven (mvn) not found - will rely on ./mvnw wrapper"
                     which yq || echo "❌ yq not found - will use sed"
                     which sed || echo "✅ sed found"
                     
@@ -84,78 +86,112 @@ pipeline {
             }
         }
 
-        stage('Build and Push Backend Images') {
+        stage('Build and Push All Images') {
             parallel {
-                stage('train-schedule') {
+                // WSO2 Components & Scripts from docker-compose.yml
+                stage('mi-runtime') {
                     steps {
-                        buildAndPush('backends/train-schedule')
+                        buildAndPush(
+                            servicePath: 'dockerfiles/micro-integrator', 
+                            serviceNameOverride: 'mi-runtime', 
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2mi:4.1.0'
+                        )
+                    }
+                }
+                stage('si-runtime') {
+                    steps {
+                        buildAndPush(
+                            servicePath: 'dockerfiles/streaming-integrator', 
+                            serviceNameOverride: 'si-runtime', 
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2si:latest'
+                        )
+                    }
+                }
+                stage('apim-scripts') {
+                    steps {
+                        buildAndPush(
+                            servicePath: 'dockerfiles/scripts', 
+                            serviceNameOverride: 'apim-scripts'
+                        )
+                    }
+                }
+                // Backend Services
+                stage('train-schedule-backend') {
+                    steps {
+                        buildAndPush(servicePath: 'backends/train-schedule', serviceNameOverride: 'train-schedule-backend')
                     }
                 }
                 stage('train-location-simulator') {
                     steps {
-                        buildAndPush('backends/train-location-simulator')
+                        buildAndPush(servicePath: 'backends/train-location-simulator')
                     }
                 }
-                stage('telecom-backends') {
+                stage('telecom-backend') {
                     steps {
-                        buildAndPush('backends/telecom-backends')
+                        buildAndPush(servicePath: 'backends/telecom-backends', serviceNameOverride: 'telecom-backend')
                     }
                 }
-                stage('soap-service') {
+                stage('soap-service-backend') {
                     steps {
-                        buildAndPush('backends/soap-service')
+                        buildAndPush(servicePath: 'backends/soap-service', serviceNameOverride: 'soap-service-backend')
                     }
                 }
-                stage('telecom-soap-service') {
+                stage('telecom-soap-backend') {
                     steps {
-                        buildAndPush('backends/telecom-soap-service')
+                        buildAndPush(servicePath: 'backends/telecom-soap-service', serviceNameOverride: 'telecom-soap-backend')
                     }
                 }
             }
         }
     }
 }
-
 /**
- * Helper function to build a Java app, then build and push a Docker image.
- * @param servicePath The path to the backend service directory.
+ * Helper function to build an app, then build and push a Docker image.
+ * @param servicePath The path to the service directory.
+ * @param serviceNameOverride Optional name for the image, otherwise derived from path.
+ * @param buildArgs Optional arguments for the 'docker build' command.
  */
-void buildAndPush(String servicePath) {
+void buildAndPush(Map params) {
+    def servicePath = params.servicePath
+    def serviceNameOverride = params.get('serviceNameOverride', '')
+    def buildArgs = params.get('buildArgs', '')
     script {
         echo "=== BUILDANDPUSH: Starting for ${servicePath} ==="
         
-        // Check if Docker is available
-        def dockerAvailable = sh(script: 'which docker', returnStatus: true) == 0
-
-        if (!dockerAvailable) {
-            error "Docker is not installed on this Jenkins agent. Please install Docker first."
-        }
-
-        def serviceName = servicePath.split('/').last()
+        def serviceName = serviceNameOverride ?: servicePath.tokenize('/').last()
         // Use the short git commit hash for the image tag
         def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-
-        // Correct image name format: <username>/<service-name>:<tag>
-        def imageName = "${env.DOCKERHUB_USERNAME}/${serviceName}:${imageTag}"
+        def imageName = "${env.DOCKERHUB_USERNAME}/${serviceName}"
+        def fullImageNameWithTag = "${imageName}:${imageTag}"
         
-        echo "--- Building and Pushing ${imageName} from path ${servicePath} ---"
+        echo "--- Building and Pushing ${fullImageNameWithTag} from path ${servicePath} ---"
 
         dir(servicePath) {
-            // List directory contents for debugging
-            sh 'echo "=== Directory contents ==="; ls -la'
-                        
-            // Check if Dockerfile exists
+            // Step 1: Build the application if it's a Maven project
+            if (fileExists('pom.xml')) {
+                echo "✅ Found pom.xml, running Maven build..."
+                // Use mvnw if available, otherwise assume mvn is in PATH
+                if (isUnix()) {
+                    sh 'chmod +x ./mvnw'
+                    sh './mvnw clean package -DskipTests'
+                } else {
+                    bat 'mvnw.cmd clean package -DskipTests'
+                }
+                echo "--- Maven build complete for ${serviceName} ---"
+            }
+
+            // Step 2: Build and push the Docker image
             if (fileExists('Dockerfile')) {
                 echo "✅ Found Dockerfile, building and pushing Docker image..."
                 // Build the Docker image
-                def dockerImage = docker.build(imageName, '.')
+                def dockerImage = docker.build(fullImageNameWithTag, "${buildArgs} .")
                 
                 // Push the built image
                 docker.withRegistry('', env.DOCKERHUB_CREDENTIALS_ID) {
-                    dockerImage.push()  // Push with commit hash tag
-                    dockerImage.push('latest')  // Also push as latest tag
+                    dockerImage.push() // Pushes the specific tag (e.g., a1b2c3d)
+                    dockerImage.push('latest') // Also pushes the 'latest' tag
                 }
-                echo "--- Successfully pushed ${imageName} ---"
+                echo "--- Successfully pushed ${fullImageNameWithTag} and ${imageName}:latest ---"
             } else {
                 echo "❌ No Dockerfile found in ${servicePath}, skipping Docker build"
             }
