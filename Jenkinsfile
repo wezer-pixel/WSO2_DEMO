@@ -24,11 +24,7 @@ pipeline {
                     which git || echo "❌ Git not found"
                     which java || echo "❌ Java (JDK) not found - required for Maven builds"
                     which mvn || echo "⚠️ Maven (mvn) not found - will rely on ./mvnw wrapper"
-                    if ! command -v yq &> /dev/null
-                    then
-                        echo "yq not found, installing..."
-                         sudo snap install yq
-                    fi
+                    which yq || echo "❌ yq not found"
                     
                     echo "=== Docker Check ==="
                     if command -v docker > /dev/null 2>&1; then
