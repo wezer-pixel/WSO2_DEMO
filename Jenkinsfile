@@ -27,7 +27,7 @@ pipeline {
                     if ! command -v yq &> /dev/null
                     then
                         echo "yq not found, installing..."
-                         sudo apt-get update && sudo apt-get install -y yq
+                         sudo snap install yq
                     fi
                     
                     echo "=== Docker Check ==="
@@ -115,7 +115,7 @@ pipeline {
                         buildAndPush(
                             servicePath: 'dockerfiles/apim',
                             serviceNameOverride: 'apim-runtime',
-                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2apim:4.2.0'
+                            buildArgs: '--build-arg BASE_IMAGE=wso2/wso2am:4.3.0'
                         )
                     }
                 }
