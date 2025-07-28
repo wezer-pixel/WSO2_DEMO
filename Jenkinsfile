@@ -25,6 +25,7 @@ pipeline {
                     which java || echo "❌ Java (JDK) not found - required for Maven builds"
                     which mvn || echo "⚠️ Maven (mvn) not found - will rely on ./mvnw wrapper"
                     which yq || echo "❌ yq not found"
+                    which sed || echo "❌ sed not found"
                     
                     echo "=== Docker Check ==="
                     if command -v docker > /dev/null 2>&1; then
