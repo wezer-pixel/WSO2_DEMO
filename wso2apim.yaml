@@ -68,6 +68,7 @@ kind: Service
 metadata:
   name: wso2-apim-service
 spec:
+  type: NodePort
   selector:
     app: wso2-apim
   ports:
@@ -111,6 +112,7 @@ kind: Service
 metadata:
   name: wso2-mi-service
 spec:
+  type: NodePort
   selector:
     app: wso2-mi
   ports:
@@ -154,6 +156,7 @@ kind: Service
 metadata:
   name: wso2-si-service
 spec:
+  type: NodePort
   selector:
     app: wso2-si
   ports:
