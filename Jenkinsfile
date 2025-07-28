@@ -129,6 +129,49 @@ pipeline {
                 }
             }
         }
+        stage('Update Manifests') {
+            steps {
+                script {
+                    echo "--- Updating Kubernetes manifests with new image tag ---"
+                    
+                    // Get the short commit hash to use as the image tag
+                    def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    echo "Using image tag: ${commitHash}"
+
+                    // Configure Git credentials to push changes
+                    withCredentials([string(credentialsId: 'wso2-gh-token', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config --global user.email "jenkins@example.com"
+                            git config --global user.name "Jenkins CI"
+                        '''
+                        
+                        // Define the services that were built
+                        def services = [
+                            'apim-runtime', 
+                            'mi-runtime', 
+                            'si-runtime', 
+                            'backend-services', 
+                            'apim-scripts'
+                        ]
+
+                        // Loop through the services and update the image tag in the deployment YAML
+                        services.each { serviceName ->
+                            echo "Updating image for ${serviceName} to wezer/${serviceName}:${commitHash}"
+                            sh "yq e '.spec.template.spec.containers[0].image = \"wezer/${serviceName}:${commitHash}\"' -i wso2apim.yaml"
+                        }
+                        
+                        echo "--- Committing and pushing updated wso2apim.yaml ---"
+                        
+                        // Add, commit, and push the updated file back to the repository
+                        sh 'git add wso2apim.yaml'
+                        sh 'git commit -m "ci: Update image tags to ${commitHash}"'
+                        // Re-add the remote with the token for authentication
+                        sh "git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/wezer-pixel/WSO2_DEMO.git"
+                        sh 'git push origin main'
+                    }
+                }
+            }
+        }
     }
 }
 /**
