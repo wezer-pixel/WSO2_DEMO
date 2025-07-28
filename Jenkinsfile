@@ -105,6 +105,13 @@ pipeline {
                 }
                 stage('apim-runtime') {
                     steps {
+                        // Change into the service's directory to download the file
+                        dir('dockerfiles/apim') {
+                            // Download the required .zip file for the build
+                            sh 'curl -L -o wso2am-4.5.0.zip wso2am-4.5.0.zip https://github.com/wso2/product-apim/releases/download/v4.5.0/wso2am-4.5.0.zip'
+                        }
+
+                        // Your existing build and push function remains the same
                         buildAndPush(
                             servicePath: 'dockerfiles/apim',
                             serviceNameOverride: 'apim-runtime',
